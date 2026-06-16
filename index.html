@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ReciclaYa Panamá</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<link rel="stylesheet" href="DISEÑO.css">
+</head>
+<body>
+
+<nav>
+  <a href="#" class="logo"><div class="logo-ring">♻</div>Recicla<em>Ya</em></a>
+  <div class="nav-links">
+    <a href="#mapa">Mapa</a>
+    <a href="#guia">Guía</a>
+    <a href="#calculadora">Calculadora</a>
+    <a href="#privacidad">Privacidad</a>
+    <a href="#integridad" id="nav-integridad" style="display:none">Integridad</a>
+    <a href="#reportar" class="pill">+ Reportar punto</a>
+    <a href="#" class="nav-admin" onclick="openAdminLogin();return false;">Admin</a>
+  </div>
+</nav>
+
+<!-- ═══ HERO ═══ -->
+<section class="hero" id="inicio">
+  <div class="hero-bg-circles"><div class="hbc hbc1"></div><div class="hbc hbc2"></div></div>
+  <div class="hero-pill"><div class="pulse"></div>Panamá · Sistema en vivo</div>
+  <h1>Recicla <em>más fácil.</em><br>Contamina <em>menos.</em></h1>
+  <p class="hero-sub">El mapa interactivo que conecta a los panameños con puntos de reciclaje, calcula tu impacto y te enseña a separar correctamente.</p>
+  <div class="search-bar">
+    <input type="text" id="heroSearch" placeholder="Buscar por material, barrio o tipo de punto…">
+    <button onclick="doSearch()">Buscar</button>
+  </div>
+  <div class="hero-kpis">
+    <div class="kpi"><strong id="kpiPoints">18</strong><span>puntos mapeados</span></div>
+    <div class="kpi"><strong>&lt;10%</strong><span>Se recicla en Panamá</span></div>
+    <div class="kpi"><strong>4,800 t</strong><span>Desechos diarios</span></div>
+    <div class="kpi"><strong id="kpiUsers">3,241</strong><span>usuarios este mes</span></div>
+  </div>
+</section>
+
+<!-- ═══ FILTROS + MAPA ═══ -->
+<div id="mapa">
+  <div class="filters-bar">
+    <span class="fl">Material:</span>
+    <button class="chip on" onclick="setFilter('todos',this)"><span class="dot dot-all"></span>Todos</button>
+    <button class="chip" onclick="setFilter('plastico',this)"><span class="dot dot-plastico"></span>Plástico</button>
+    <button class="chip" onclick="setFilter('papel',this)"><span class="dot dot-papel"></span>Papel/Cartón</button>
+    <button class="chip" onclick="setFilter('vidrio',this)"><span class="dot dot-vidrio"></span>Vidrio</button>
+    <button class="chip" onclick="setFilter('metal',this)"><span class="dot dot-metal"></span>Metal</button>
+    <button class="chip" onclick="setFilter('electronico',this)"><span class="dot dot-electronico"></span>Electrónico</button>
+    <button class="chip" onclick="setFilter('tetrapak',this)"><span class="dot dot-tetrapak"></span>Tetrapak</button>
+  </div>
+  <div class="map-layout">
+    <aside class="sidebar">
+      <div class="sb-head">
+        <h3>Puntos de reciclaje</h3>
+        <span class="cnt" id="cntBadge">18</span>
+      </div>
+      <div class="plist" id="plist"></div>
+    </aside>
+    <div class="map-wrap">
+      <div id="map"></div>
+      <button id="geoMapBtn" class="geo-map-btn" onclick="requestMapGeo()" title="Mostrar mi ubicación">📍</button>
+      <div class="info-overlay" id="infoPanel">
+        <div class="io-head">
+          <h4 id="ip-n">–</h4><span id="ip-t">–</span>
+          <button class="io-close" onclick="closePanel()">✕</button>
+        </div>
+        <div class="io-body">
+          <div class="io-row"><strong>Dirección</strong><span id="ip-a">–</span></div>
+          <div class="io-row"><strong>Contacto</strong><span id="ip-c">–</span></div>
+          <div class="io-row"><strong>Horario</strong><span id="ip-h">–</span></div>
+          <div class="io-tags" id="ip-m"></div>
+          <a class="io-btn" id="ip-link" href="#" target="_blank">Abrir en Google Maps</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ GUÍA DE SEPARACIÓN ═══ -->
+<section class="guide" id="guia">
+  <div class="guide-inner">
+    <div class="fade-up">
+      <div class="sec-label">Guía interactiva</div>
+      <h2 class="sec-title">¿Qué va en cada <em>contenedor</em>?</h2>
+      <p class="guide-intro">Haz clic en un contenedor para saber exactamente qué puedes echar y qué no.</p>
+    </div>
+    <div class="bins-grid fade-up">
+      <div class="bin bin-bl" onclick="toggleBin('bl')">
+        <span class="bin-icon">🔵</span>
+        <h3>Papel y Cartón</h3>
+        <p>Periódicos, cajas, revistas</p>
+      </div>
+      <div class="bin bin-gr" onclick="toggleBin('gr')">
+        <span class="bin-icon">🟢</span>
+        <h3>Vidrio</h3>
+        <p>Botellas, frascos</p>
+      </div>
+      <div class="bin bin-am" onclick="toggleBin('am')">
+        <span class="bin-icon">🟡</span>
+        <h3>Plástico y Latas</h3>
+        <p>Botellas PET, envases</p>
+      </div>
+      <div class="bin bin-re" onclick="toggleBin('re')">
+        <span class="bin-icon">🔴</span>
+        <h3>Orgánico / Residual</h3>
+        <p>Restos de comida</p>
+      </div>
+      <div class="bin bin-gy" onclick="toggleBin('gy')">
+        <span class="bin-icon">⚫</span>
+        <h3>Electrónico</h3>
+        <p>Celulares, baterías</p>
+      </div>
+      <div class="bin bin-br" onclick="toggleBin('br')">
+        <span class="bin-icon">🟤</span>
+        <h3>Tetrapak</h3>
+        <p>Cajas de jugo, leche</p>
+      </div>
+    </div>
+
+    <!-- Detalles de contenedores -->
+    <div class="bin-detail bin-bl" id="detail-bl">
+      <div class="bd-title bd-bl">Papel y Cartón — ¿Qué va aquí?</div>
+      <div class="bd-cols">
+        <div>
+          <p class="bd-yes-label">✅ SÍ se recicla</p>
+          <div class="items-grid">
+            <div class="item-yes"><span class="ck ck-y">✓</span>Periódicos y revistas</div>
+            <div class="item-yes"><span class="ck ck-y">✓</span>Cajas de cartón</div>
+            <div class="item-yes"><span class="ck ck-y">✓</span>Papel de oficina</div>
+            <div class="item-yes"><span class="ck ck-y">✓</span>Bolsas de papel</div>
+            <div class="item-yes"><span class="ck ck-y">✓</span>Envases de papel limpio</div>
+          </div>
+        </div>
+        <div>
+          <p class="bd-no-label">❌ NO se recicla</p>
+          <div class="items-grid">
+            <div class="item-no"><span class="ck ck-n">✕</span>Papel sucio o grasoso</div>
+            <div class="item-no"><span class="ck ck-n">✕</span>Papel plastificado</div>
+            <div class="item-no"><span class="ck ck-n">✕</span>Papel higiénico usado</div>
+            <div class="item-no"><span class="ck ck-n">✕</span>Papel carbón</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bin-detail bin-gr" id="detail-gr">
+      <div class="bd-title bd-gr">📗 Vidrio — ¿Qué va aquí?</div>
+      <div class="bd-cols">
+        <div>
+          <p class="bd-yes-label">✅ SÍ se recicla</p>
+          <div class="items-grid">
+            <div class="item-yes"><span class="ck ck-y">✓</span>Botellas de vidrio</div>
+            <div class="item-yes"><span class="ck ck-y">✓</span>Frascos de conserva</div>
+            <div class="item-yes"><span class="ck ck-y">✓</span>Tarros de vidrio</div>
+            <div class="item-yes"><span class="ck ck-y">✓</span>Botellas de perfume</div>
+          </div>
+        </div>
+        <div>
+          <p class="bd-no-label">❌ NO se recicla</p>
+          <div class="items-grid">
+            <div class="item-no"><span class="ck ck-n">✕</span>Espejos y cristales</div>
+            <div class="item-no"><span class="ck ck-n">✕</span>Bombillas</div>
+            <div class="item-no"><span class="ck ck-n">✕</span>Vidrio de ventana</div>
+            <div class="item-no"><span class="ck ck-n">✕</span>Pirex o cerámica</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bin-detail bin-am" id="detail-am">
+      <div class="bd-title bd-am">📙 Plástico y Latas — ¿Qué va aquí?</div>
+      <div class="bd-cols">
+        <div>
+          <p class="bd-yes-label">✅ SÍ se recicla</p>
+          <div class="items-grid">
+            <div class="item-yes"><span class="ck ck-y">✓</span>Botellas PET (#1)</div>
+            <div class="item-yes"><span class="ck ck-y">✓</span>Envases HDPE (#2)</div>
+            <div class="item-yes"><span class="ck ck-y">✓</span>Latas de aluminio</div>
+            <div class="item-yes"><span class="ck ck-y">✓</span>Latas de conserva</div>
+            <div class="item-yes"><span class="ck ck-y">✓</span>Tapas de plástico</div>
+          </div>
+        </div>
+        <div>
+          <p class="bd-no-label">❌ NO se recicla</p>
+          <div class="items-grid">
+            <div class="item-no"><span class="ck ck-n">✕</span>Envases sucios</div>
+            <div class="item-no"><span class="ck ck-n">✕</span>Plástico sin código</div>
+            <div class="item-no"><span class="ck ck-n">✕</span>Plásticos film</div>
+            <div class="item-no"><span class="ck ck-n">✕</span>Espuma de poliestireno</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bin-detail bin-re" id="detail-re">
+      <div class="bd-title bd-re">📕 Orgánico / Residual</div>
+      <div class="bd-cols">
+        <div>
+          <p class="bd-yes-label">✅ Va en orgánico</p>
+          <div class="items-grid">
+            <div class="item-yes"><span class="ck ck-y">✓</span>Restos de comida</div>
+            <div class="item-yes"><span class="ck ck-y">✓</span>Cáscaras de frutas</div>
+            <div class="item-yes"><span class="ck ck-y">✓</span>Restos de vegetales</div>
+            <div class="item-yes"><span class="ck ck-y">✓</span>Café y filtros</div>
+          </div>
+        </div>
+        <div>
+          <p class="bd-no-label">❌ No mezclar</p>
+          <div class="items-grid">
+            <div class="item-no"><span class="ck ck-n">✕</span>Carnes y pescados crudos</div>
+            <div class="item-no"><span class="ck ck-n">✕</span>Aceite de cocina</div>
+            <div class="item-no"><span class="ck ck-n">✕</span>Materiales reciclables</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bin-detail bin-gy" id="detail-gy">
+      <div class="bd-title bd-gy">⚫ Electrónicos — Residuos especiales</div>
+      <p class="bin-detail-note">Los residuos electrónicos (RAEE) contienen metales pesados. Nunca los botes a la basura común.</p>
+      <div class="bd-cols">
+        <div>
+          <p class="bd-yes-label">✅ Llevar a punto especial</p>
+          <div class="items-grid">
+            <div class="item-yes"><span class="ck ck-y">✓</span>Celulares y tablets</div>
+            <div class="item-yes"><span class="ck ck-y">✓</span>Computadoras</div>
+            <div class="item-yes"><span class="ck ck-y">✓</span>Baterías y pilas</div>
+            <div class="item-yes"><span class="ck ck-y">✓</span>Cables y cargadores</div>
+            <div class="item-yes"><span class="ck ck-y">✓</span>Electrodomésticos</div>
+          </div>
+        </div>
+        <div>
+          <p class="bd-no-label">⚠️ Riesgo ambiental</p>
+          <div class="items-grid">
+            <div class="item-no"><span class="ck ck-n">✕</span>No tirar a basura común</div>
+            <div class="item-no"><span class="ck ck-n">✕</span>No quemar</div>
+            <div class="item-no"><span class="ck ck-n">✕</span>No desmontar sin protección</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bin-detail bin-br" id="detail-br">
+      <div class="bd-title bd-br">🟤 Tetrapak — Envases multicapa</div>
+      <p class="bin-detail-note">El tetrapak tiene capas de cartón, plástico y aluminio. Requiere un proceso especial de reciclaje.</p>
+      <div class="bd-cols">
+        <div>
+          <p class="bd-yes-label">✅ SÍ se recicla</p>
+          <div class="items-grid">
+            <div class="item-yes"><span class="ck ck-y">✓</span>Cajas de jugo</div>
+            <div class="item-yes"><span class="ck ck-y">✓</span>Cajas de leche</div>
+            <div class="item-yes"><span class="ck ck-y">✓</span>Cajas de caldo</div>
+            <div class="item-yes"><span class="ck ck-y">✓</span>Abierto y limpio</div>
+          </div>
+        </div>
+        <div>
+          <p class="bd-no-label">❌ Preparación</p>
+          <div class="items-grid">
+            <div class="item-no"><span class="ck ck-n">✕</span>No aplastado con contenido</div>
+            <div class="item-no"><span class="ck ck-n">✕</span>Con restos de líquido</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ CALCULADORA ═══ -->
+<section class="calc" id="calculadora">
+  <div class="calc-inner">
+    <div class="sec-label fade-up">Calculadora de impacto</div>
+    <h2 class="sec-title fade-up">¿Cuánto puedes <em>salvar</em> reciclando?</h2>
+    <p class="calc-sub fade-up">Ajusta los sliders según tus hábitos y ve el impacto real en tiempo real.</p>
+    <div class="calc-grid fade-up">
+      <div class="calc-inputs">
+        <div class="ci"><label>Botellas plástico por semana</label><div class="ci-row"><span id="v1">7</span><input type="range" min="0" max="30" value="7" oninput="calcImpact()"></div></div>
+        <div class="ci"><label>Kg de papel / cartón por semana</label><div class="ci-row"><span id="v2">2</span><input type="range" min="0" max="20" value="2" oninput="calcImpact()"></div></div>
+        <div class="ci"><label>Botellas de vidrio por semana</label><div class="ci-row"><span id="v3">3</span><input type="range" min="0" max="20" value="3" oninput="calcImpact()"></div></div>
+        <div class="ci"><label>Latas de aluminio por semana</label><div class="ci-row"><span id="v4">5</span><input type="range" min="0" max="30" value="5" oninput="calcImpact()"></div></div>
+        <div class="ci"><label>Dispositivos electrónicos al año</label><div class="ci-row"><span id="v5">2</span><input type="range" min="0" max="10" value="2" oninput="calcImpact()"></div></div>
+      </div>
+      <div class="results">
+        <div class="res-card"><div class="num" id="rCO2">—</div><div class="lbl">kg de CO₂ evitados al año</div><div class="eq" id="rCO2eq">—</div></div>
+        <div class="res-card"><div class="num" id="rAgua">—</div><div class="lbl">litros de agua ahorrados al año</div><div class="eq" id="rAguaEq">—</div></div>
+        <div class="res-card"><div class="num" id="rKg">—</div><div class="lbl">kg de residuos desviados del vertedero</div><div class="eq" id="rKgEq">—</div></div>
+        <div class="impact-bar">
+          <div class="ib-label">Tu nivel de impacto: <span id="rLevel">—</span></div>
+          <div class="ib-track"><div class="ib-fill" id="rBar" style="width:0%"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ STATS ═══ -->
+<section class="stats-sec" id="stats">
+  <div class="stats-inner">
+    <div class="stats-header">
+      <div class="sec-label">La realidad</div>
+      <h2 class="sec-title">Panamá y sus <em>residuos</em></h2>
+    </div>
+    <div class="stats-cards">
+      <div class="scard fade-up"><span class="scard-ico">🗑️</span><strong>4,800 t</strong><p>toneladas de desechos generadas cada día en Panamá</p></div>
+      <div class="scard fade-up"><span class="scard-ico">♻️</span><strong>&lt;10%</strong><p>de los residuos son recuperados formalmente en el país</p></div>
+      <div class="scard fade-up"><span class="scard-ico">🌎</span><strong>1.7M t</strong><p>toneladas anuales ubican a Panamá entre los mayores generadores de residuos per cápita en América Latina</p></div>
+      <div class="scard fade-up"><span class="scard-ico">🏙️</span><strong>ODS 11</strong><p>Meta 11.6 de la Agenda 2030: reducir el impacto ambiental negativo de las ciudades</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ TIPS ═══ -->
+<section class="tips">
+  <div class="tips-inner">
+    <div class="sec-label fade-up">Consejos</div>
+    <h2 class="sec-title fade-up">Hábitos que <em>hacen la diferencia</em></h2>
+    <div class="tips-grid">
+      <div class="tip fade-up"><span class="tip-ico">🧴</span><h3>Enjuaga antes de reciclar</h3><p>Los envases sucios contaminan otros materiales reciclables. Con un simple enjuague aseguras que el plástico, vidrio o lata se pueda procesar.</p></div>
+      <div class="tip fade-up"><span class="tip-ico">🏷️</span><h3>Lee el símbolo de reciclaje</h3><p>El número dentro del triángulo en los plásticos indica su tipo. Los #1 (PET) y #2 (HDPE) son los más fácilmente reciclables en Panamá.</p></div>
+      <div class="tip fade-up"><span class="tip-ico">📦</span><h3>Aplasta y dobla</h3><p>Aplasta botellas y dobla cajas antes de depositar. Ahorras espacio en los contenedores y facilitas la recolección.</p></div>
+      <div class="tip fade-up"><span class="tip-ico">🔋</span><h3>Las pilas van aparte</h3><p>Nunca mezcles pilas y baterías con la basura común. Contienen metales pesados tóxicos. Lleva a puntos especializados como GreenCycle.</p></div>
+      <div class="tip fade-up"><span class="tip-ico">🛍️</span><h3>Bolsas reutilizables</h3><p>Cada panameño usa en promedio 500 bolsas plásticas al año. Cambia a bolsas de tela y reduces dramáticamente tu huella plástica.</p></div>
+      <div class="tip fade-up"><span class="tip-ico">🌱</span><h3>Compostar en casa</h3><p>Los restos orgánicos representan el 60% de la basura doméstica. Un compostero casero los convierte en abono y reduce lo que va al vertedero.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ INTEGRIDAD ═══ -->
+<section class="integrity-sec" id="integridad" style="display:none">
+  <div class="integrity-inner">
+    <div class="sec-label fade-up">Seguridad de datos</div>
+    <h2 class="sec-title fade-up">Integridad de la <em>base de datos</em></h2>
+    <p class="integrity-desc fade-up">
+      Cada punto del mapa tiene un <strong>hash SHA-256</strong> calculado sobre sus datos críticos.
+      Un <strong>hash raíz</strong> consolida todos los registros — si cualquier dato es alterado,
+      el hash cambia y el sistema lo detecta al instante.
+    </p>
+    <div class="integrity-status-bar" id="integrityBar">
+      <div class="isb-icon" id="isbIcon">⏳</div>
+      <div class="isb-text">
+        <strong id="isbTitle">Verificando integridad…</strong>
+        <p id="isbDesc">Calculando hashes de los 18 registros de la base de datos.</p>
+        <div class="isb-hash" id="isbRootHash"></div>
+      </div>
+      <div class="isb-actions">
+        <button class="btn-verify" onclick="runIntegrityCheck()">🔄 Verificar ahora</button>
+        <button class="btn-tamper" id="btnTamper" onclick="simulateTamper()">⚠️ Simular ataque</button>
+        <button class="btn-restore" id="btnRestore" onclick="restoreData()">↩ Restaurar datos</button>
+      </div>
+    </div>
+    <div class="audit-table-wrap fade-up">
+      <div class="audit-table-head">
+        <span>ID</span><span>Punto de reciclaje</span><span>Hash SHA-256</span><span>Estado</span>
+      </div>
+      <div id="auditRows"></div>
+    </div>
+    <div class="integrity-legend fade-up">
+      <div class="il-item"><div class="il-dot il-ok"></div>Hash verificado — datos íntegros</div>
+      <div class="il-item"><div class="il-dot il-fail"></div>Hash inválido — posible manipulación detectada</div>
+    </div>
+    <div class="merkle-note fade-up">
+      <strong>¿Cómo funciona?</strong> Al cargar la app, se calcula un SHA-256 individual por cada registro usando sus campos críticos
+      (nombre, coordenadas, materiales). Luego se encadena un <strong>hash raíz</strong> concatenando todos los hashes individuales —
+      similar a un árbol de Merkle. El hash raíz esperado está embebido en el código fuente. Cualquier diferencia entre
+      el hash calculado en tiempo de ejecución y el esperado activa una alerta visual inmediata.
+    </div>
+  </div>
+</section>
+
+<!-- ═══ PRIVACIDAD ═══ -->
+<section class="privacy-sec" id="privacidad">
+  <div class="privacy-inner">
+    <div class="sec-label sec-label-blue fade-up">Seguridad y Privacidad</div>
+    <h2 class="sec-title fade-up">Tus datos son <em>tuyos</em></h2>
+    <p class="privacy-desc fade-up">ReciclaYa aplica el principio de <strong>privacidad por diseño</strong>. Tu ubicación solo se usa en tu dispositivo para mostrarte el mapa — nunca se transmite ni almacena en ningún servidor.</p>
+    <div class="privacy-grid fade-up">
+      <div class="pcard-priv pcard-yes">
+        <h4>✅ Lo que SÍ hacemos</h4>
+        <ul>
+          <li>Pedimos permiso explícito antes de acceder al GPS</li>
+          <li>Usamos la ubicación solo para centrar el mapa en tu zona</li>
+          <li>Las coordenadas del reporte se procesan localmente en tu navegador</li>
+          <li>El hash SHA-256 se calcula en tu dispositivo con <code>crypto.subtle</code></li>
+          <li>Puedes revocar el permiso en cualquier momento</li>
+          <li>Los datos del formulario solo van al panel admin del equipo</li>
+        </ul>
+      </div>
+      <div class="pcard-priv pcard-no">
+        <h4>❌ Lo que NO hacemos</h4>
+        <ul>
+          <li>No registramos ni guardamos tu historial de movimiento</li>
+          <li>No compartimos tu ubicación con terceros ni anunciantes</li>
+          <li>No usamos cookies de rastreo entre sesiones</li>
+          <li>No enviamos tu ubicación a ningún servidor externo</li>
+          <li>No guardamos rutas ni trayectorias de ningún usuario</li>
+          <li>No identificamos al usuario detrás de un reporte</li>
+        </ul>
+      </div>
+    </div>
+    <div class="consent-status-bar fade-up" id="privacyStatusBar">
+      <div>
+        <div class="csb-label">Estado de tu permiso de ubicación</div>
+        <div class="csb-sublabel">Puedes cambiarlo en cualquier momento</div>
+      </div>
+      <div class="csb-right">
+        <span class="csb-state" id="csbState">Verificando…</span>
+        <button class="btn-revoke" id="revokeBtn" onclick="revokeConsent()" style="display:none">Revocar permiso</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ CONSENT BANNER ═══ -->
+<div class="consent-banner" id="consentBanner">
+  <div class="consent-text">
+    <strong>📍 ¿Permitir acceso a tu ubicación?</strong>
+    <p>ReciclaYa quiere centrar el mapa cerca de ti para mostrarte los puntos de reciclaje más cercanos. Tu ubicación <strong class="consent-strong">no se guarda ni se comparte</strong>. Solo se usa en tu pantalla. <a class="consent-link" onclick="document.getElementById('privacidad').scrollIntoView({behavior:'smooth'})">Ver política de privacidad</a></p>
+  </div>
+  <div class="consent-actions">
+    <button class="btn-consent-no" onclick="denyConsent()">No por ahora</button>
+    <button class="btn-consent-yes" onclick="grantConsent()">✅ Sí, usar mi ubicación</button>
+  </div>
+</div>
+
+<!-- ═══ REPORTAR ═══ -->
+<section class="report-sec" id="reportar">
+  <div class="report-inner">
+    <div class="fade-up">
+      <div class="sec-label">📍 Comunidad</div>
+      <h2 class="sec-title">Reportar un <em>punto nuevo</em></h2>
+      <p class="report-desc">¿Encontraste un reciclador que no está en el mapa? Repórtalo. El equipo lo verifica antes de publicarlo.</p>
+    </div>
+    <div class="rform fade-up">
+      <div><label>Nombre del punto *</label><input type="text" id="r-nombre" placeholder="Ej: Punto Limpio Villa Lucía"></div>
+      <div><label>Dirección / referencia *</label><input type="text" id="r-dir" placeholder="Ej: Calle 5ta, frente al parque, San Francisco"></div>
+      <div>
+        <label>Coordenadas GPS *</label>
+        <div class="geo-row">
+          <div class="rform-group"><input type="text" id="r-coords" placeholder="Lat, Lng — usa el botón →" readonly></div>
+          <button class="geo-btn" onclick="captureGPS()">📡 Capturar mi ubicación</button>
+        </div>
+        <div class="geo-status" id="geo-status"></div>
+      </div>
+      <div>
+        <label>Materiales que acepta *</label>
+        <div class="mat-checks">
+          <label class="mcheck"><input type="checkbox" value="plastico"> ♳ Plástico</label>
+          <label class="mcheck"><input type="checkbox" value="papel"> 📄 Papel/Cartón</label>
+          <label class="mcheck"><input type="checkbox" value="vidrio"> 🫙 Vidrio</label>
+          <label class="mcheck"><input type="checkbox" value="metal"> 🔧 Metal</label>
+          <label class="mcheck"><input type="checkbox" value="electronico"> 💻 Electrónico</label>
+          <label class="mcheck"><input type="checkbox" value="tetrapak"> 🧃 Tetrapak</label>
+        </div>
+      </div>
+      <div><label>Horario de atención</label><input type="text" id="r-horario" placeholder="Ej: Lun–Vie 8am–5pm"></div>
+      <div><label>Contacto / teléfono</label><input type="text" id="r-contacto" placeholder="Ej: Tel: 6xxx-xxxx"></div>
+      <div>
+        <label for="r-tipo">Tipo de punto</label>
+        <select id="r-tipo">
+          <option value="municipal">Municipal (Alcaldía/Municipio)</option>
+          <option value="empresa">Empresa privada</option>
+          <option value="programa">Programa / ONG</option>
+        </select>
+      </div>
+      <div>
+        <label>Hash de integridad (generado automáticamente)</label>
+        <div class="hash-preview" id="hash-preview">Completa los campos para ver el hash…</div>
+        <p class="hash-note">SHA-256 de: nombre + coordenadas + timestamp. Garantiza que el reporte no fue alterado en tránsito.</p>
+      </div>
+      <button class="submit-btn" onclick="submitReport()" id="submit-btn">Enviar reporte para verificación →</button>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ ADMIN PANEL ═══ -->
+<div class="admin-panel" id="adminPanel">
+  <div class="admin-nav">
+    <h2>ReciclaYa — Panel Admin</h2>
+    <div class="admin-nav-right">
+      <span class="badge-pend" id="pendBadge">0 pendientes</span>
+      <button class="admin-exit" onclick="closeAdmin()">✕ Salir</button>
+    </div>
+  </div>
+  <div class="admin-body">
+    <div class="admin-tabs">
+      <button class="atab on" onclick="switchTab('pending',this)">⏳ Pendientes</button>
+      <button class="atab" onclick="switchTab('approved',this)">✅ Aprobados</button>
+      <button class="atab" onclick="switchTab('rejected',this)">❌ Rechazados</button>
+    </div>
+    <div id="queueContainer" class="report-queue"></div>
+  </div>
+</div>
+
+<!-- ═══ LOGIN MODAL ═══ -->
+<div class="modal-bg" id="loginModal">
+  <div class="modal-card modal-card-sm">
+    <div class="modal-head">
+      <h3>🔒 Acceso Admin</h3>
+      <button class="modal-close" onclick="closeLoginModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p class="modal-intro">Solo el equipo de ReciclaYa puede acceder a este panel para verificar y aprobar nuevos puntos de reciclaje.</p>
+      <div class="login-field"><label>Usuario</label><input type="text" id="l-user" placeholder="admin"></div>
+      <div class="login-field"><label>Contraseña</label><input type="password" id="l-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
+      <button class="login-btn" onclick="doLogin()">Entrar al panel →</button>
+      <div class="login-err" id="login-err">Usuario o contraseña incorrectos.</div>
+      <p class="login-hint">Demo: usuario <strong>admin</strong> / contraseña <strong>reciclaya2025</strong></p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SUCCESS MODAL ═══ -->
+<div class="modal-bg" id="successModal">
+  <div class="modal-card modal-card-md">
+    <div class="modal-head">
+      <h3>✅ Reporte enviado</h3>
+      <button class="modal-close" onclick="closeSuccessModal()">✕</button>
+    </div>
+    <div class="modal-body modal-body-center">
+      <div class="success-icon">♻️</div>
+      <h4 class="success-title">¡Gracias por contribuir!</h4>
+      <p class="success-desc">Tu reporte fue recibido con un hash de integridad único. El equipo lo revisará en el panel admin antes de publicarlo en el mapa.</p>
+      <div class="success-hash" id="success-hash"></div>
+      <button class="success-close-btn" onclick="closeSuccessModal()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<footer>
+  <strong>ReciclaYa Panamá</strong> — Sistema de geolocalización web para puntos de reciclaje<br>
+  Proyecto académico · Universidad Tecnológica de Panamá · Facultad de Ingeniería de Sistemas Computacionales<br>
+  Mariam Cárdenas · Gabriela Cension · Daniela Jaimes<br>
+  <span class="footer-sub">Alineado con ODS 11 · Agenda 2030 · Basura Cero Panamá</span>
+</footer>
+
+<script src="../APLICACIONES/APP.js"></script>
+</body>
+</html>
