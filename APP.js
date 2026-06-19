@@ -162,7 +162,7 @@ function calcImpact() {
 
   const pct = Math.min(100, Math.round((co2/400)*100));
   document.getElementById("rBar").style.width = pct + "%";
-  const level = pct < 25 ? "Principiante 🌱" : pct < 50 ? "En camino 🌿" : pct < 75 ? "Reciclador activo ♻️" : "Súper reciclador 🌟";
+  const level = pct < 25 ? "Principiante" : pct < 50 ? "En camino" : pct < 75 ? "Reciclador activo" : "Súper reciclador";
   document.getElementById("rLevel").textContent = level;
 }
 
@@ -224,7 +224,6 @@ async function runIntegrityCheck() {
 
   if (rootOk) {
     bar.className = "integrity-status-bar ok";
-    icon.textContent  = "✅";
     title.textContent = "Base de datos íntegra — " + POINTS.length + " registros verificados";
     desc.textContent  = "Todos los hashes coinciden con los valores esperados. No se detectaron manipulaciones.";
     rootEl.className  = "isb-hash";
@@ -233,7 +232,6 @@ async function runIntegrityCheck() {
     document.getElementById("btnRestore").style.display = "none";
   } else {
     bar.className = "integrity-status-bar fail";
-    icon.textContent  = "🚨";
     title.textContent = "¡ALERTA! Se detectaron " + tamperedCount + " registro(s) alterado(s)";
     desc.textContent  = "El hash raíz no coincide. Los registros marcados en rojo fueron modificados.";
     rootEl.className  = "isb-hash bad";
@@ -251,7 +249,7 @@ function showIntegrityAlert() {
   const banner = document.createElement("div");
   banner.id = "integrityMapAlert";
   banner.style.cssText = "background:#7a0000;color:#fff;text-align:center;padding:10px 1rem;font-size:.82rem;font-weight:600;z-index:3000;position:relative;cursor:pointer";
-  banner.innerHTML = "🚨 ALERTA DE INTEGRIDAD: Datos del mapa posiblemente manipulados. <u>Ver detalles</u>";
+  banner.innerHTML = "ALERTA DE INTEGRIDAD: Datos del mapa posiblemente manipulados. <u>Ver detalles</u>";
   banner.onclick = () => document.getElementById("integridad").scrollIntoView({behavior:"smooth"});
   document.getElementById("mapa").insertAdjacentElement("beforebegin", banner);
 }
@@ -262,7 +260,7 @@ function simulateTamper() {
   _originalPoint = {...POINTS[idx], m:[...POINTS[idx].m]};
   POINTS[idx].lat = parseFloat((POINTS[idx].lat + 0.0042).toFixed(6));
   POINTS[idx].n   = POINTS[idx].n + " [MODIFICADO]";
-  showToast("⚠️ Ataque simulado: registro #" + _tamperedId + " fue alterado");
+  showToast("Ataque simulado: registro #" + _tamperedId + " fue alterado");
   runIntegrityCheck();
 }
 
@@ -273,7 +271,7 @@ function restoreData() {
   _tamperedId = null; _originalPoint = null;
   const banner = document.getElementById("integrityMapAlert");
   if (banner) banner.remove();
-  showToast("✅ Datos restaurados correctamente");
+  showToast("Datos restaurados correctamente");
   runIntegrityCheck();
 }
 
@@ -290,9 +288,9 @@ function locateUser() {
       map.setView([lat, lng], 13);
       if (userMarker) map.removeLayer(userMarker);
       userMarker = L.circleMarker([lat, lng], {radius:10, fillColor:"#2db85c", color:"#fff", weight:2.5, fillOpacity:.9})
-        .addTo(map).bindTooltip("📍 Tu ubicación (no guardada)");
+        .addTo(map).bindTooltip("Tu ubicación (no guardada)");
     },
-    () => showToast("⚠️ No se pudo obtener tu ubicación"),
+    () => showToast("No se pudo obtener tu ubicación"),
     {enableHighAccuracy:true, timeout:8000, maximumAge:0}
   );
 }
@@ -300,7 +298,7 @@ function locateUser() {
 function requestMapGeo() {
   const consent = localStorage.getItem("rya_geo_consent");
   if      (consent === "granted") locateUser();
-  else if (consent === "denied")  showToast("📍 Permiso denegado. Cámbialo en la sección Privacidad.");
+  else if (consent === "denied")  showToast("Permiso denegado. Cámbialo en la sección Privacidad.");
   else document.getElementById("consentBanner").classList.add("show");
 }
 
@@ -309,21 +307,21 @@ function grantConsent() {
   document.getElementById("consentBanner").classList.remove("show");
   updatePrivacyStatusBar();
   locateUser();
-  showToast("✅ Permiso concedido. Tu ubicación no se guarda.");
+  showToast("Permiso concedido. Tu ubicación no se guarda.");
 }
 
 function denyConsent() {
   localStorage.setItem("rya_geo_consent", "denied");
   document.getElementById("consentBanner").classList.remove("show");
   updatePrivacyStatusBar();
-  showToast("👍 Sin problema. El mapa funciona igual sin ubicación.");
+  showToast("Sin problema. El mapa funciona igual sin ubicación.");
 }
 
 function revokeConsent() {
   localStorage.removeItem("rya_geo_consent");
   if (userMarker) { map.removeLayer(userMarker); userMarker = null; }
   updatePrivacyStatusBar();
-  showToast("🔒 Permiso revocado. Ubicación eliminada del mapa.");
+  showToast("Permiso revocado. Ubicación eliminada del mapa.");
 }
 
 function updatePrivacyStatusBar() {
@@ -332,11 +330,11 @@ function updatePrivacyStatusBar() {
   const revokeBtn  = document.getElementById("revokeBtn");
   if (!stateEl) return;
   if (consent === "granted") {
-    stateEl.textContent = "✅ Permiso concedido"; stateEl.className = "csb-state csb-granted"; revokeBtn.style.display = "inline-block";
+    stateEl.textContent = "Permiso concedido"; stateEl.className = "csb-state csb-granted"; revokeBtn.style.display = "inline-block";
   } else if (consent === "denied") {
-    stateEl.textContent = "🚫 Permiso denegado";  stateEl.className = "csb-state csb-denied";  revokeBtn.style.display = "none";
+    stateEl.textContent = "Permiso denegado";  stateEl.className = "csb-state csb-denied";  revokeBtn.style.display = "none";
   } else {
-    stateEl.textContent = "⏳ Sin decisión aún";  stateEl.className = "csb-state";              revokeBtn.style.display = "none";
+    stateEl.textContent = "Sin decisión aún";  stateEl.className = "csb-state";              revokeBtn.style.display = "none";
   }
 }
 
@@ -353,7 +351,7 @@ function captureGPS() {
   status.className = "geo-status";
 
   if (!navigator.geolocation) { status.textContent = "GPS no disponible en este navegador."; status.className = "geo-status geo-err"; return; }
-  if (consent === "denied")   { status.textContent = "❌ Permiso denegado. Cámbialo en la sección Privacidad."; status.className = "geo-status geo-err"; return; }
+  if (consent === "denied")   { status.textContent = "Permiso denegado. Cámbialo en la sección Privacidad."; status.className = "geo-status geo-err"; return; }
 
   const doCapture = () => {
     status.textContent = "📡 Solicitando ubicación…";
@@ -362,19 +360,19 @@ function captureGPS() {
         reportGeoLat = pos.coords.latitude.toFixed(6);
         reportGeoLng = pos.coords.longitude.toFixed(6);
         input.value  = reportGeoLat + ", " + reportGeoLng;
-        status.textContent = "✅ Capturadas. Solo se incluyen en este reporte si lo envías.";
+        status.textContent = "Capturadas. Solo se incluyen en este reporte si lo envías.";
         status.className   = "geo-status geo-ok";
         if (!localStorage.getItem("rya_geo_consent")) { localStorage.setItem("rya_geo_consent","granted"); updatePrivacyStatusBar(); }
         updateHash();
       },
-      () => { status.textContent = "❌ No se pudo obtener la ubicación. Intenta de nuevo."; status.className = "geo-status geo-err"; },
+      () => { status.textContent = "No se pudo obtener la ubicación. Intenta de nuevo."; status.className = "geo-status geo-err"; },
       {enableHighAccuracy:true, timeout:10000, maximumAge:0}
     );
   };
 
   if (consent === "granted") { doCapture(); }
   else {
-    status.innerHTML = '⚠️ Necesitamos tu permiso. <button onclick="grantConsent();captureGPS()" style="background:var(--g5);color:var(--g1);border:none;border-radius:4px;padding:3px 10px;font-size:.78rem;font-weight:700;cursor:pointer;margin-left:4px">Permitir y continuar</button>';
+    status.innerHTML = 'Necesitamos tu permiso. <button onclick="grantConsent();captureGPS()" style="background:var(--g5);color:var(--g1);border:none;border-radius:4px;padding:3px 10px;font-size:.78rem;font-weight:700;cursor:pointer;margin-left:4px">Permitir y continuar</button>';
   }
 }
 
@@ -397,11 +395,11 @@ async function submitReport() {
   const tipo     = document.getElementById("r-tipo").value;
   const mats     = Array.from(document.querySelectorAll(".mat-checks input:checked")).map(x => x.value);
 
-  if (!nombre || !dir || !coords || mats.length === 0) { showToast("⚠️ Completa nombre, dirección, coordenadas y al menos un material."); return; }
+  if (!nombre || !dir || !coords || mats.length === 0) { showToast("Completa nombre, dirección, coordenadas y al menos un material."); return; }
 
   const [latStr, lngStr] = coords.split(",").map(s => s.trim());
   const lat = parseFloat(latStr), lng = parseFloat(lngStr);
-  if (isNaN(lat) || isNaN(lng) || lat < 7 || lat > 9.7 || lng < -83 || lng > -77) { showToast("❌ Las coordenadas no corresponden a Panamá."); return; }
+  if (isNaN(lat) || isNaN(lng) || lat < 7 || lat > 9.7 || lng < -83 || lng > -77) { showToast("Las coordenadas no corresponden a Panamá."); return; }
 
   const btn = document.getElementById("submit-btn");
   btn.disabled = true; btn.textContent = "Procesando…";
@@ -487,7 +485,7 @@ function renderQueue(tab) {
   const cont = document.getElementById("queueContainer");
   if (list.length === 0) {
     const labels = {pending:"No hay reportes pendientes de revisión.", approved:"No hay puntos aprobados aún.", rejected:"No hay reportes rechazados."};
-    cont.innerHTML = `<div class="empty-state">✅ ${labels[tab]}</div>`;
+    cont.innerHTML = `<div class="empty-state">${labels[tab]}</div>`;
     return;
   }
   cont.innerHTML = list.map(r => `
@@ -503,14 +501,14 @@ function renderQueue(tab) {
         <div class="rq-field"><strong>Enviado</strong>${r.submittedAt}</div>
         <div class="rq-field"><strong>Materiales</strong>${r.mats.join(", ")}</div>
         <div class="rq-field"><strong>Horario</strong>${r.horario||"—"}</div>
-        <div class="rq-hash"><strong style="font-size:.68rem;display:block;margin-bottom:2px;color:var(--g3)">🔐 Hash SHA-256</strong>${r.hash}</div>
+        <div class="rq-hash"><strong style="font-size:.68rem;display:block;margin-bottom:2px;color:var(--g3)">Hash SHA-256</strong>${r.hash}</div>
         <div class="rq-qr">
           <div class="qr-canvas" id="qr-${r.id}" style="width:80px;height:80px;flex-shrink:0;border-radius:6px;overflow:hidden"></div>
           <div class="qr-info"><strong>Código QR firmado</strong>Escanea para verificar integridad.<br><span style="font-size:.72rem;color:var(--textt)">ID: ${r.id}</span></div>
         </div>
         ${r.status==="pending"?`<div class="rq-actions">
-          <button class="btn-approve" onclick="decideReport('${r.id}','approved')">✅ Aprobar y publicar en mapa</button>
-          <button class="btn-reject"  onclick="decideReport('${r.id}','rejected')">❌ Rechazar</button>
+          <button class="btn-approve" onclick="decideReport('${r.id}','approved')">Aprobar y publicar en mapa</button>
+          <button class="btn-reject"  onclick="decideReport('${r.id}','rejected')">Rechazar</button>
         </div>`:""}
       </div>
     </div>`).join("");
@@ -542,9 +540,9 @@ function decideReport(id, decision) {
       lat: r.lat, lng: r.lng, m: r.mats
     });
     renderMap();
-    showToast("✅ Punto publicado en el mapa");
+    showToast("Punto publicado en el mapa");
   } else {
-    showToast("❌ Reporte rechazado");
+    showToast("Reporte rechazado");
   }
   localStorage.setItem("rya_reports", JSON.stringify(pendingReports));
   updatePendBadge();
